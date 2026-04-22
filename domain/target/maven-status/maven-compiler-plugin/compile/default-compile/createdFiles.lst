@@ -1,1 +1,4 @@
+io\booker\domain\business\models\Role.class
+io\booker\domain\business\models\Tenant.class
+io\booker\domain\enums\UserType.class
 io\booker\domain\business\models\User.class

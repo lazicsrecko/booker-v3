@@ -1,6 +1,5 @@
 package io.booker.infrastructure.entity;
 
-import io.booker.domain.business.models.User;
 import io.booker.domain.enums.UserType;
 import jakarta.persistence.*;
 
@@ -23,12 +22,30 @@ public class UserEntity {
     private String email;
     @Column(name = "is_verified")
     private Boolean isVerified;
-    @Column(name = "tenant_id")
-    private Long tenantId;
-    @Column(name = "role_id")
-    private Long roleId;
     @Column(name = "user_type")
     private UserType userType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
+    private TenantEntity tenant;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "role_id")
+    private RoleEntity role;
+
+    public UserEntity() {
+    }
+
+    public UserEntity(Long id, String firstName, String lastName, String username, String password, String email, Boolean isVerified, UserType userType) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        this.isVerified = isVerified;
+        this.userType = userType;
+    }
 
     public Long getId() {
         return id;
@@ -58,29 +75,15 @@ public class UserEntity {
         return isVerified;
     }
 
-    public Long getTenantId() {
-        return tenantId;
-    }
-
-    public Long getRoleId() {
-        return roleId;
-    }
-
     public UserType getUserType() {
         return userType;
     }
 
-    public User mapToUser() {
-        return new User(
-                this.id,
-                this.firstName,
-                this.lastName,
-                this.username,
-                this.password,
-                this.email,
-                this.isVerified,
-                this.tenantId,
-                this.roleId,
-                this.userType);
+    public TenantEntity getTenant() {
+        return tenant;
+    }
+
+    public RoleEntity getRole() {
+        return role;
     }
 }

@@ -1,10 +1,10 @@
 package io.booker.application.service.userfeature;
 
+import io.booker.application.common.dtos.UserDto;
 import io.booker.application.contracts.repositories.UserRepository;
 import io.booker.domain.business.models.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -44,12 +44,9 @@ public class UserService implements io.booker.application.contracts.services.use
     }
 
     @Override
-    public User getUserByUsername(String username) {
-        return this.userRepository.findByUsername(username);
-    }
-
-    public String hashPassword(String username, String password) {
-        return this.passwordEncoder.encode(username.concat(password));
+    public UserDto getUserById(Long userId) {
+        User user = this.userRepository.getUserById(userId);
+        return new UserDto(user);
     }
 
     private Boolean checkPassword(String username, String userPassword, String providedPassword) {

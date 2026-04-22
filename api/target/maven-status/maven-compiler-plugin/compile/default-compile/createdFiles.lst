@@ -1,0 +1,5 @@
+io\booker\BookerApplication.class
+io\booker\config\SecurityConfig.class
+io\booker\filter\JwtAuthFilter.class
+io\booker\controller\AuthController.class
+io\booker\controller\UserController.class

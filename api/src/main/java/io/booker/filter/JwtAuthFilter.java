@@ -1,9 +1,6 @@
 package io.booker.filter;
 
-import io.booker.application.contracts.repositories.UserRepository;
 import io.booker.application.contracts.services.auth.AuthService;
-import io.booker.application.contracts.services.user.UserService;
-import io.booker.domain.business.models.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,17 +11,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import java.io.IOException;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final AuthService jwtService;
-    private final UserRepository userRepository;
 
-    public JwtAuthFilter(AuthService jwtService, UserRepository userRepository) {
+    public JwtAuthFilter(AuthService jwtService) {
         this.jwtService = jwtService;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -34,9 +28,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            String username = this.jwtService.extractUsername(token);
-
             UserDetails userDetails = jwtService.validateToken(token);
+
             if (userDetails != null) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,

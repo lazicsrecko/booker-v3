@@ -7,4 +7,5 @@ import java.util.List;
 public interface UserRepository {
     List<User> findAll();
     User findByUsername(String username);
+    User getUserById(Long userId);
 }

@@ -1,30 +1,27 @@
-package io.booker.domain.business.models;
+package io.booker.application.common.dtos;
 
+import io.booker.domain.business.models.User;
 import io.booker.domain.enums.UserType;
 
-public class User {
+public class UserDto {
     private Long id;
     private String firstName;
     private String lastName;
     private String username;
-    private String password;
     private String email;
-    private Boolean isVerified;
     private UserType userType;
-    private Role role;
-    private Tenant tenant;
 
-    public User(Long id, String firstName, String lastName, String username, String password, String email, Boolean isVerified, UserType userType, Role role, Tenant tenant) {
+    public UserDto(User user) {
+        this(user.getId(), user.getFirstName(), user.getLastName(), user.getUsername(), user.getEmail(), user.getUserType());
+    }
+
+    public UserDto(Long id, String firstName, String lastName, String username, String email, UserType userType) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.username = username;
-        this.password = password;
         this.email = email;
-        this.isVerified = isVerified;
         this.userType = userType;
-        this.role = role;
-        this.tenant = tenant;
     }
 
     public Long getId() {
@@ -43,27 +40,11 @@ public class User {
         return username;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
     public String getEmail() {
         return email;
     }
 
-    public Boolean isVerified() {
-        return isVerified;
-    }
-
     public UserType getUserType() {
         return userType;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public Tenant getTenant() {
-        return tenant;
     }
 }

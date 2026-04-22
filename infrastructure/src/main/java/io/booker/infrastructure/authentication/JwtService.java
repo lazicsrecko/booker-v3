@@ -10,6 +10,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,15 +28,21 @@ import java.util.function.Function;
 @Service
 public class JwtService implements AuthService {
     private final String secret;
+    private final String issuer;
+    private final String audience;
     private final Long accessTokenExpiration;
     private final Long refreshTokenExpiration;
     private final UserRepository userRepository;
 
-    public JwtService(@Value("${app.secret}") String secret,
-                      @Value("${app.accessTokenExpiresIn}") Long accessTokenExpiration,
-                      @Value("${app.refreshTokenExpiresIn}") Long refreshTokenExpiration,
+    public JwtService(@Value("${jwt.secret}") String secret,
+                      @Value("${jwt.accessTokenExpiresIn}") Long accessTokenExpiration,
+                      @Value("${jwt.refreshTokenExpiresIn}") Long refreshTokenExpiration,
+                      @Value("${jwt.issuer}") String issuer,
+                      @Value("${jwt.audiance}") String audience,
                       UserRepository userRepository) {
         this.secret = secret;
+        this.issuer = issuer;
+        this.audience = audience;
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
         this.userRepository = userRepository;
@@ -46,19 +53,23 @@ public class JwtService implements AuthService {
         return new JwtTokenDto(generateAccessToken(user), generateRefreshToken(user));
     }
 
+    @Transactional
     @Override
     public UserDetails validateToken(String token) {
-        String username = extractUsername(token);
-        String issuer = extractClaim(token, Claims::getIssuer);
-        Boolean isExpired = isTokenExpired(token);
-        User user = this.userRepository.findByUsername(username);
+        Boolean isValid = validateTokenInternal(token);
 
-        if (!issuer.contains("booker-rest-api") && isExpired) {
+        if (!isValid) {
             return null;
 //            throw new Exception("Expired token.");
         }
-        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + extractClaim(token, claims -> claims.get(CustomClaimTypes.ROLE, Long.class))));
+
+        String username = extractUsername(token);
+        User user = this.userRepository.findByUsername(username);
+
+        String roleClaim = extractClaim(token, claims -> claims.get(CustomClaimTypes.ROLE, String.class));
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(String.format("ROLE_%s", roleClaim.toUpperCase())));
         UserDetails userDetails = new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
+
         return userDetails;
     }
 
@@ -72,6 +83,27 @@ public class JwtService implements AuthService {
 
     public String extractUsername(String token) {
         return extractClaim(token, claims -> claims.get(CustomClaimTypes.USERNAME, String.class));
+    }
+
+    private Boolean validateTokenInternal(String token) {
+        try {
+            String issuer = extractClaim(token, Claims::getIssuer);
+            Boolean isExpired = isTokenExpired(token);
+            String username = extractUsername(token);
+            this.userRepository.findByUsername(username);
+
+            if (isExpired) {
+                return false;
+            }
+
+            if (!issuer.contains(this.issuer)) {
+                return false;
+            }
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private SecretKey getSignKey() {
@@ -93,33 +125,33 @@ public class JwtService implements AuthService {
 
     private String generateAccessToken(User user) {
         Date currentDateTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-        Date expiratonDateTime = Date.from(LocalDateTime.now().plusMinutes(accessTokenExpiration).atZone(ZoneId.systemDefault()).toInstant());
+        Date expirationDateTime = Date.from(LocalDateTime.now().plusMinutes(accessTokenExpiration).atZone(ZoneId.systemDefault()).toInstant());
         JwtBuilder jwtBuilder = Jwts.builder()
                 .claims()
                 .add(CustomClaimTypes.FIRST_NAME, user.getFirstName())
                 .add(CustomClaimTypes.LAST_NAME, user.getLastName())
                 .add(CustomClaimTypes.USERNAME, user.getUsername())
-                .add(CustomClaimTypes.ROLE, user.getRoleId())
+                .add(CustomClaimTypes.ROLE, user.getRole().getName())
                 .add(CustomClaimTypes.USER_ID, user.getId())
-                .add(CustomClaimTypes.TENANT_ID, user.getTenantId())
+                .add(CustomClaimTypes.TENANT_ID, user.getTenant().getId())
                 .add(CustomClaimTypes.USER_TYPE, user.getUserType())
-                .issuer("booker-rest-api")
+                .issuer(this.issuer)
                 .issuedAt(currentDateTime)
-                .expiration(expiratonDateTime)
+                .expiration(expirationDateTime)
                 .and().signWith(getSignKey());
         return jwtBuilder.compact();
     }
 
     private String generateRefreshToken(User user) {
         Date currentDateTime = Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
-        Date expiratonDateTime = Date.from(LocalDateTime.now().plusMinutes(refreshTokenExpiration).atZone(ZoneId.systemDefault()).toInstant());
+        Date expirationDateTime = Date.from(LocalDateTime.now().plusMinutes(refreshTokenExpiration).atZone(ZoneId.systemDefault()).toInstant());
         JwtBuilder jwtBuilder = Jwts.builder()
                 .claims()
                 .add(CustomClaimTypes.USER_ID, user.getId())
-                .add(CustomClaimTypes.TENANT_ID, user.getTenantId())
-                .issuer("booker-rest-api")
+                .add(CustomClaimTypes.TENANT_ID, user.getTenant().getId())
+                .issuer(this.issuer)
                 .issuedAt(currentDateTime)
-                .expiration(expiratonDateTime)
+                .expiration(expirationDateTime)
                 .and().signWith(getSignKey());
         return jwtBuilder.compact();
     }

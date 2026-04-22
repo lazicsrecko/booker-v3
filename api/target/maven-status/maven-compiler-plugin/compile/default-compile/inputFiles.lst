@@ -3,6 +3,3 @@ C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\config\SecurityConfig.
 C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\controller\AuthController.java
 C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\controller\UserController.java
 C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\filter\JwtAuthFilter.java
-C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\model\dto\JwtTokenDto.java
-C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\model\request\LoginRequset.java
-C:\Users\Hp\Desktop\booker-v3\api\src\main\java\io\booker\model\User.java

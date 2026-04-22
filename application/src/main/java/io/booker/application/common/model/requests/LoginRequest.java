@@ -1,6 +1,6 @@
-package io.booker.model.request;
+package io.booker.application.common.model.requests;
 
-public class LoginRequset {
+public class LoginRequest {
     private String username;
     private String password;
 
